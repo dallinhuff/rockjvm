@@ -39,6 +39,7 @@ abstract class LList[A] {
   def map[B](transformer: Transformer[A, B]): LList[B]
   def filter(predicate: Predicate[A]): LList[A]
   def flatMap[B](transformer: Transformer[A, LList[B]]): LList[B]
+  def find(predicate: Predicate[A]): A
 }
 
 case class Empty[A]() extends LList[A] {
@@ -49,6 +50,7 @@ case class Empty[A]() extends LList[A] {
   override def map[B](t: Transformer[A, B]): LList[B] = Empty()
   override def filter(p: Predicate[A]): LList[A] = Empty()
   override def flatMap[B](t: Transformer[A, LList[B]]): LList[B] = Empty()
+  override def find(predicate: Predicate[A]): A = throw new NoSuchElementException
 }
 
 case class Cons[A](override val head: A, override val tail: LList[A]) extends LList[A] {
@@ -72,6 +74,10 @@ case class Cons[A](override val head: A, override val tail: LList[A]) extends LL
   override def filter(p: Predicate[A]): LList[A] =
     if p.test(head) then Cons(head, tail.filter(p))
     else tail.filter(p)
+
+  override def find(predicate: Predicate[A]): A =
+    if predicate.test(head) then head
+    else tail.find(predicate)
 }
 
 object LListTest {
@@ -102,5 +108,12 @@ object LListTest {
 
     val flatMapped = first3Nums.flatMap(incList)
     println(flatMapped)
+
+    val twoFound = first3Nums.find(evenPredicate)
+    println(twoFound)
+
+    // throws no such element exception
+//    val sevenFound = first3Nums.find((element: Int) => element == 7)
+//    println(sevenFound)
   }
 }
