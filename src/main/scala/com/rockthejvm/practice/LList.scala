@@ -2,44 +2,16 @@ package com.rockthejvm.practice
 
 import scala.annotation.tailrec
 
-trait Predicate[A] {
-  def test(element: A): Boolean
-}
-
-val evenPredicate = new Predicate[Int] {
-  override def test(element: Int): Boolean =
-    element % 2 == 0
-}
-
-trait Transformer[A, B] {
-  def transform(element: A): B
-}
-
-val doubler = new Transformer[Int, Int] {
-  override def transform(element: Int): Int =
-    element * 2
-}
-
-val incList = new Transformer[Int, LList[Int]] {
-  override def transform(element: Int): LList[Int] =
-    Cons(element, Cons(element + 1, Empty()))
-}
-
-trait StringToInt extends Transformer[String, Int] {
-  override def transform(element: String): Int =
-    element.toInt
-}
-
 abstract class LList[A] {
   def head: A
   def tail: LList[A]
   def isEmpty: Boolean = this == Empty()
   def add(element: A): LList[A] = Cons(element, this)
   infix def ++(other: LList[A]): LList[A]
-  def map[B](transformer: Transformer[A, B]): LList[B]
-  def filter(predicate: Predicate[A]): LList[A]
-  def flatMap[B](transformer: Transformer[A, LList[B]]): LList[B]
-  def find(predicate: Predicate[A]): A
+  def map[B](transform: A => B): LList[B]
+  def filter(test: A => Boolean): LList[A]
+  def flatMap[B](transform: A => LList[B]): LList[B]
+  def find(test: A => Boolean): A
 }
 
 case class Empty[A]() extends LList[A] {
@@ -47,10 +19,10 @@ case class Empty[A]() extends LList[A] {
   override def tail: LList[A] = throw new NoSuchElementException
   override def toString: String = "[]"
   override infix def ++(other: LList[A]): LList[A] = other
-  override def map[B](t: Transformer[A, B]): LList[B] = Empty()
-  override def filter(p: Predicate[A]): LList[A] = Empty()
-  override def flatMap[B](t: Transformer[A, LList[B]]): LList[B] = Empty()
-  override def find(predicate: Predicate[A]): A = throw new NoSuchElementException
+  override def map[B](transform: A => B): LList[B] = Empty()
+  override def filter(test: A => Boolean): LList[A] = Empty()
+  override def flatMap[B](transform: A => LList[B]): LList[B] = Empty()
+  override def find(test: A => Boolean): A = throw new NoSuchElementException
 }
 
 case class Cons[A](override val head: A, override val tail: LList[A]) extends LList[A] {
@@ -65,19 +37,19 @@ case class Cons[A](override val head: A, override val tail: LList[A]) extends LL
 
   override infix def ++(other: LList[A]): LList[A] = Cons(head, tail ++ other)
 
-  override def map[B](t: Transformer[A, B]): LList[B] =
-    Cons(t.transform(head), tail.map(t))
+  override def map[B](transform: A => B): LList[B] =
+    Cons(transform(head), tail.map(transform))
 
-  override def flatMap[B](t: Transformer[A, LList[B]]): LList[B] =
-    t.transform(head) ++ tail.flatMap(t)
+  override def flatMap[B](transform: A => LList[B]): LList[B] =
+    transform(head) ++ tail.flatMap(transform)
 
-  override def filter(p: Predicate[A]): LList[A] =
-    if p.test(head) then Cons(head, tail.filter(p))
-    else tail.filter(p)
+  override def filter(test: A => Boolean): LList[A] =
+    if test(head) then Cons(head, tail.filter(test))
+    else tail.filter(test)
 
-  override def find(predicate: Predicate[A]): A =
-    if predicate.test(head) then head
-    else tail.find(predicate)
+  override def find(test: A => Boolean): A =
+    if test(head) then head
+    else tail.find(test)
 }
 
 object LListTest {
@@ -94,22 +66,22 @@ object LListTest {
     println(first3Nums_v2)
     println(first3Nums_v2.isEmpty)
 
-    val doubledNums = first3Nums.map(doubler)
+    val doubledNums = first3Nums.map(x => x * 2)
     println(doubledNums)
 
-    val nestedNums = first3Nums.map(incList)
+    val nestedNums = first3Nums.map(x => Cons(x, Cons(x + 1, Empty())))
     println(nestedNums)
 
-    val evenNums = first3Nums.filter(evenPredicate)
+    val evenNums = first3Nums.filter(x => x % 2 == 0)
     println(evenNums)
 
     val concatted = first3Nums ++ first3Nums_v2
     println(concatted)
 
-    val flatMapped = first3Nums.flatMap(incList)
+    val flatMapped = first3Nums.flatMap(x => Cons(x, Cons(x + 1, Empty())))
     println(flatMapped)
 
-    val twoFound = first3Nums.find(evenPredicate)
+    val twoFound = first3Nums.find(x => x % 2 == 0)
     println(twoFound)
 
     // throws no such element exception
