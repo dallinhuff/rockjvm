@@ -30,12 +30,9 @@ object WhatsAFunction {
 
   val anAddition = adder(2, 76)
 
-  val concat = new ((String, String) => String) {
-    override def apply(str1: String, str2: String): String = str1 + str2
-  }
+  val concat: (String, String) => String = _ + _
 
-  val superAdder: (Int) => (Int) => Int =
-    (v1) => (v2) => v1 + v2
+  val superAdder = (v1: Int) => (v2: Int) => v1 + v2
   val add1 = superAdder(1)
   val onePlusTwo = add1(2)
   println(onePlusTwo)

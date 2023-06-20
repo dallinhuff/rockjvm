@@ -66,13 +66,13 @@ object LListTest {
     println(first3Nums_v2)
     println(first3Nums_v2.isEmpty)
 
-    val doubledNums = first3Nums.map(x => x * 2)
+    val doubledNums = first3Nums.map(_ * 2)
     println(doubledNums)
 
     val nestedNums = first3Nums.map(x => Cons(x, Cons(x + 1, Empty())))
     println(nestedNums)
 
-    val evenNums = first3Nums.filter(x => x % 2 == 0)
+    val evenNums = first3Nums.filter(_ % 2 == 0)
     println(evenNums)
 
     val concatted = first3Nums ++ first3Nums_v2
@@ -81,11 +81,7 @@ object LListTest {
     val flatMapped = first3Nums.flatMap(x => Cons(x, Cons(x + 1, Empty())))
     println(flatMapped)
 
-    val twoFound = first3Nums.find(x => x % 2 == 0)
+    val twoFound = first3Nums.find(_ % 2 == 0)
     println(twoFound)
-
-    // throws no such element exception
-//    val sevenFound = first3Nums.find((element: Int) => element == 7)
-//    println(sevenFound)
   }
 }
