@@ -10,6 +10,7 @@ abstract class LList[A] {
   infix def ++(other: LList[A]): LList[A]
   def map[B](transform: A => B): LList[B]
   def filter(test: A => Boolean): LList[A]
+  def withFilter(test: A => Boolean): LList[A] = filter(test)
   def flatMap[B](transform: A => LList[B]): LList[B]
   def find(test: A => Boolean): A
   def foreach(f: A => Unit): Unit
