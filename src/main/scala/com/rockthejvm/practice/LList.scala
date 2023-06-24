@@ -6,12 +6,16 @@ abstract class LList[A] {
   def head: A
   def tail: LList[A]
   def isEmpty: Boolean = this == Empty()
-  def add(element: A): LList[A] = Cons(element, this)
+  def add(el: A): LList[A] = Cons(el, this)
   infix def ++(other: LList[A]): LList[A]
   def map[B](transform: A => B): LList[B]
   def filter(test: A => Boolean): LList[A]
   def flatMap[B](transform: A => LList[B]): LList[B]
   def find(test: A => Boolean): A
+  def foreach(f: A => Unit): Unit
+  def sort(compare: (A, A) => Int): LList[A]
+  def zipWith[B, T](other: LList[T], zip: (A, T) => B): LList[B]
+  def foldLeft[B](start: B)(operator: (B, A) => B): B
 }
 
 case class Empty[A]() extends LList[A] {
@@ -23,6 +27,15 @@ case class Empty[A]() extends LList[A] {
   override def filter(test: A => Boolean): LList[A] = Empty()
   override def flatMap[B](transform: A => LList[B]): LList[B] = Empty()
   override def find(test: A => Boolean): A = throw new NoSuchElementException
+  override def foreach(f: A => Unit): Unit = ()
+  override def sort(compare: (A, A) => Int): LList[A] = this
+  override def zipWith[B, T](other: LList[T], zip: (A, T) => B): LList[B] = {
+    if (!other.isEmpty)
+      throw new IllegalArgumentException("Zipping lists of non-equal length")
+    else
+      Empty()
+  }
+  override def foldLeft[B](start: B)(operator: (B, A) => B): B = start
 }
 
 case class Cons[A](override val head: A, override val tail: LList[A]) extends LList[A] {
@@ -50,6 +63,29 @@ case class Cons[A](override val head: A, override val tail: LList[A]) extends LL
   override def find(test: A => Boolean): A =
     if test(head) then head
     else tail.find(test)
+
+  override def foreach(f: A => Unit): Unit = {
+    f(head)
+    tail.foreach(f)
+  }
+
+  override def sort(compare: (A, A) => Int): LList[A] = {
+    // insertion sort (O(n^2), stack recursive)
+    def insert(el: A, sorted: LList[A]): LList[A] =
+      if (sorted.isEmpty || compare(el, sorted.head) <= 0)
+        Cons(el, sorted)
+      else
+        Cons(sorted.head, insert(el, sorted.tail))
+    val sortedTail = tail.sort(compare)
+    insert(head, sortedTail)
+  }
+
+  override def zipWith[B, T](other: LList[T], zip: (A, T) => B): LList[B] =
+    if (other.isEmpty) throw new IllegalArgumentException("Zipping lists of non-equal length")
+    else Cons(zip(head, other.head), tail.zipWith(other.tail, zip))
+
+  override def foldLeft[B](start: B)(operator: (B, A) => B): B =
+    tail.foldLeft(operator(start, head))(operator)
 }
 
 object LListTest {
@@ -83,5 +119,17 @@ object LListTest {
 
     val twoFound = first3Nums.find(_ % 2 == 0)
     println(twoFound)
+
+    first3Nums.foreach(println)
+
+    val sortedNums = first3Nums_v2.sort(_ - _)
+    println(sortedNums)
+
+    val someStrings = Cons("Dog", Cons("Cat", Cons("Crocodile", Empty())))
+    val zippedList = first3Nums.zipWith(someStrings, (num, str) => s"$num-$str")
+    println(zippedList)
+
+    val sum = first3Nums.foldLeft(0)(_ + _)
+    println(s"sum: $sum")
   }
 }
